@@ -105,10 +105,10 @@
             }
             //run("Clear Results");
             //close();
-	    result += "" + angle;
+	        result += "" + angle;
             return result;
         } else {
-	    result += "" + angle + " ";
+	        result += "" + angle + " ";
             getSelectionCoordinates(x, y);
             run("Draw", "slice");
             makeText(angle + fromCharCode(0x00B0), ((x[0] + x[2])/2), ((y[0] + y[2])/2));

@@ -23,14 +23,16 @@ public class ResultsPanel extends JPanel implements ActionListener {
     private JLabel placementLabel1;
     private JLabel placementLabel2;
     private JButton skipBtn;
+    private JButton placeBtn;
     private JLabel placementAlert;
     private String[] defaultTable;
     private JScrollPane scrollPane;
     private JTable dataTable;
     private JButton averageBtn;
     private JButton renameBtn;
-    private double currentProgress = 0;
+    volatile private double currentProgress = 0;
     
+    volatile private boolean doPlace = false;
     private boolean doSkip = false;
 
     public ResultsPanel() {    	
@@ -51,11 +53,15 @@ public class ResultsPanel extends JPanel implements ActionListener {
         placementLabel1 = new JLabel ("<html><center>Next value to be placed: ");
         placementLabel2 = new JLabel ("<html><center>no value");
         skipBtn = new JButton ("<html><center>skip value");
-        placementAlert = new JLabel ("	            	Place values in table to proceed");
+        placeBtn = new JButton ("<html><center>Place:");
+        placementAlert = new JLabel ("<html><center>Skip or place value");
         renameBtn = new JButton ("<html><center>Rename Images");
         renameBtn.setToolTipText ("Rename all images in selected folder to match each image's label");
         averageBtn = new JButton ("<html><center>Average Values");
         averageBtn.setToolTipText ("Average all columns with an \"AVG\" in their title");
+        
+        placeBtn.setHorizontalAlignment(SwingConstants.LEFT);
+        placementAlert.setHorizontalAlignment(SwingConstants.CENTER);
         
         //gets the number of rows and columns from the default table
         String[] rowSplit = (contents.split("\n")); //splits file at each new line to get number of columns
@@ -76,6 +82,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
         importBtn.setMargin(new Insets(0, 0, 0, 0));
         exportBtn.setMargin(new Insets(0, 0, 0, 0));
         skipBtn.setMargin(new Insets(0, 0, 0, 0));
+        placeBtn.setMargin(new Insets(0, 0, 0, 0));
         dataTable.setRowMargin(0);
         renameBtn.setMargin(new Insets(0, 0, 0, 0));
         averageBtn.setMargin(new Insets(0, 0, 0, 0));
@@ -86,6 +93,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
         placementLabel1.setFont(new Font("Arial", Font.PLAIN, 12));
         placementLabel2.setFont(new Font("Arial", Font.PLAIN, 12));
         skipBtn.setFont(new Font("Arial", Font.PLAIN, 12));
+        placeBtn.setFont(new Font("Arial", Font.PLAIN, 12));
         placementAlert.setFont(new Font("Arial", Font.PLAIN, 12));
         dataTable.setFont(new Font("Arial", Font.PLAIN, 12));
         renameBtn.setFont(new Font("Arial", Font.PLAIN, 12));
@@ -98,6 +106,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
         placementLabel1.setBackground(lightGray);
         placementLabel2.setBackground(lightGray);
         skipBtn.setBackground(lightGray);
+        placeBtn.setBackground(lightGray);
         placementAlert.setBackground(lightGray);
         placementAlert.setForeground(Color.RED);
         dataTable.setBackground(lightGray);
@@ -109,6 +118,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
         importBtn.setActionCommand("import");
         exportBtn.setActionCommand("export");
         skipBtn.setActionCommand("skip");
+        placeBtn.setActionCommand("place");
         renameBtn.setActionCommand("rename");
         averageBtn.setActionCommand("average");
         
@@ -116,6 +126,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
         importBtn.addActionListener(this);
         exportBtn.addActionListener(this);
         skipBtn.addActionListener(this);
+        placeBtn.addActionListener(this);
         renameBtn.addActionListener(this);
         averageBtn.addActionListener(this);
         
@@ -143,7 +154,8 @@ public class ResultsPanel extends JPanel implements ActionListener {
         placementLabel1.setPreferredSize(new Dimension(150, 17));
         placementLabel2.setPreferredSize(new Dimension(150, 17));
         skipBtn.setPreferredSize(new Dimension(70, 17));
-        placementAlert.setPreferredSize(new Dimension(250,17));
+        placeBtn.setPreferredSize(new Dimension(131, 17));
+        placementAlert.setPreferredSize(new Dimension(150,17));
         renameBtn.setPreferredSize(new Dimension(167, 15));
         averageBtn.setPreferredSize(new Dimension(167, 15));
         
@@ -172,6 +184,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
         p2.add(placementLabel1);
         p2.add(placementLabel2);
         p2.add(skipBtn);
+        p2.add(placeBtn);
         p2.add(placementAlert);
     	
     	mainPane.add(p1, BorderLayout.NORTH);
@@ -183,6 +196,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
     	setPreferredSize(new Dimension(668,57 + (rows * 18)));
     	
     	skipBtn.setEnabled(false);
+    	placeBtn.setEnabled(false);
     	placementAlert.setVisible(false);
     	
     	setVisible(true);
@@ -198,6 +212,8 @@ public class ResultsPanel extends JPanel implements ActionListener {
         	exportResults();
         } else if ("skip".equals(e.getActionCommand())){
         	doSkip = true;
+        } else if ("place".equals(e.getActionCommand())){
+        	doPlace = true;
         } else if ("rename".equals(e.getActionCommand())) {
         	renameFiles();
         } else if("average".equals(e.getActionCommand())) {
@@ -347,27 +363,51 @@ public class ResultsPanel extends JPanel implements ActionListener {
      * Prompts user to select a folder of images. Iterates through all images, reading the names off of the images and changing the file name to match
      */
     public void renameFiles() {
-    	String newFileName;
+    	renameBtn.setEnabled(false);
     	JFileChooser f = new JFileChooser();
         f.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY); 
         
         int result = f.showOpenDialog(this);
         if (result == JFileChooser.CANCEL_OPTION || f.getSelectedFile() == null) {
+        	renameBtn.setEnabled(true);
             return;
         }
         
         System.out.println("Selected File: " + f.getSelectedFile());
         
-        File[] files = f.getSelectedFile().listFiles();
-		
-        for(int i = 0; i < files.length; i++) {
+        File[] files = f.getSelectedFile().listFiles();  
+        
+        new Thread(new Runnable() {
+        	@Override
+        	public void run() {
+        		doRenameLoop(f, files);
+        	}
+    	}).start();
+        
+    	new Thread(new Runnable() {
+        	@Override
+        	public void run() {
+        		updateRenameBtn();
+        	}
+    	}).start();
+                
+        //System.out.println((i+1) + " / " + files.length + " = " +  currentProgress);    // TODO
+    	//setRenameText((i+1) + " / " + files.length + " = " +  currentProgress);
+        //setRenameText("" + currentProgress);
+        
+        //System.out.println(f.getCurrentDirectory());
+        //System.out.println(f.getSelectedFile());
+    }
+    
+    private void doRenameLoop(JFileChooser f, File[] files) {
+    	String newFileName;
+		for(int i = 0; i < files.length; i++) {
        		currentProgress = ((double)(i + 1.0) / (double)(files.length));
-        	System.out.println((i+1) + " / " + files.length + " = " +  currentProgress);
         	
         	boolean hasP = false; 
         	int index = (files[i].getName().lastIndexOf('.')); //Get the extension of the current image being processed
         	String extension = (files[i].getName()).substring(index);
-        	if((files[i].getName()).substring(index-1, index).equals("P") || (files[i].getName()).contains("P_")) {
+        	if((files[i].getName()).substring(index-1, index).equals("P") || (files[i].getName()).contains("(P)")) {
         		hasP = true; //Checks if the current image has been previously processed
         	}
         	
@@ -376,7 +416,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
         		Opener fileOpener = new Opener(); 
         		ImagePlus img = fileOpener.openImage("" + files[i]); //open the image in ImageJ
         	
-        		newFileName = NMSHLPlugin.readImageName(img); //reread name off of image just in case it is named incorrectly
+        		newFileName = "" + (i+1) + "--" + NMSHLPlugin.readImageName(img); //reread name off of image just in case it is named incorrectly
     		
         		if(WindowManager.getImageCount() > 0) {
         			ImagePlus imagePlus = (WindowManager.getCurrentImage());
@@ -386,27 +426,44 @@ public class ResultsPanel extends JPanel implements ActionListener {
     		    
         		File tempFile;
         		if(hasP) { //Generates a new file name including the processed name, processed modifier, and file extension
-        			tempFile = new File(f.getSelectedFile() + File.separator + newFileName + "P_(0)" + extension);
-        			newFileName += "P_";
+        			tempFile = new File(f.getSelectedFile() + File.separator + newFileName + "(P)" + extension);
+        			newFileName += "(P)";
         		} else {
-               		tempFile = new File(f.getSelectedFile() + File.separator + newFileName + "(0)" + extension);
+               		tempFile = new File(f.getSelectedFile() + File.separator + newFileName + extension);
         		}
-    		
+        		
         		if(!files[i].getName().equals(tempFile.getName())) { //checks if file name is already correct before renaming
+        			
+        			/*
         			int j = 1;
         			while(tempFile.exists()) { //loops through values j to account for images with the same name on the image
         				tempFile = new File(f.getSelectedFile() + File.separator + newFileName + "(" + j + ")" + extension);
         				j++;
         			}
+        			*/
+        			
+        			tempFile = new File(f.getSelectedFile() + File.separator + newFileName + extension);
         			files[i].renameTo(tempFile);
         		}
         		
         		NMSHLPlugin.measurementPanel.setAnswered(true);
         	} 
         } 
-                
-        //System.out.println(f.getCurrentDirectory());
-        //System.out.println(f.getSelectedFile());
+		JOptionPane.showMessageDialog(this, "Done. " + files.length + " files renamed.");
+    }
+    
+    private void updateRenameBtn() {
+    	while(currentProgress < 1) {
+    		try {
+				Thread.sleep(300);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    		renameBtn.setText("" + (int)(currentProgress * 100) + "%");
+    	}
+    	renameBtn.setText("<html><center>Rename Images");
+    	renameBtn.setEnabled(true);
     }
     
     /*
@@ -424,7 +481,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
     	} else if(calc.contains("Total Area")) {
     		newCalc = "Area";
     	} else if(calc.contains("Total Mean")) {
-    		
+    		newCalc = "EI";
     	} else if(calc.contains("Medial Area")) {
     		
     	} else if(calc.contains("Medial E.I.")) {
@@ -474,7 +531,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
     			} else if(muscleNameArray[3] != null && !columns.get(i).contains(muscleNameArray[3])){ //filters out all non "CS" columns
     				columns.remove(i);
     				i--;
-    			} else if(muscleNameArray[3] == null && columns.get(i).contains("CS")){ //filters out all columns containing "CS"
+    			} else if(muscleNameArray[3] == null && columns.get(i).contains("CSA")){ //filters out all columns containing "CSA"
     				columns.remove(i);
     				i--;
     			} else if(columns.get(i).contains("EL")){ //filters out all "EL" (elastography) columns
@@ -490,10 +547,15 @@ public class ResultsPanel extends JPanel implements ActionListener {
     	} else { //TA image filtering occurs here
     		for(int i = 0; i < columns.size(); i++) {
     			String currentCol = columns.get(i);
-    			if(dataTable.getValueAt(rowIndex, findCol(currentCol)).toString().contains("TA") || dataTable.getValueAt(rowIndex, findCol(currentCol)).toString().contains("TA")) {
-    				columns.remove(i);
-    				i--;
-    			} else if(Double.parseDouble((dataTable.getValueAt(rowIndex, findCol(currentCol)).toString())) != 0) { //excludes columns that already contain values
+    			boolean isNumber = true;
+    			try {
+    				Double.parseDouble((dataTable.getValueAt(rowIndex, findCol(currentCol)).toString()));
+    			} catch (Exception e) {
+    				isNumber = false;
+    			}
+    			
+    			//if(dataTable.getValueAt(rowIndex, findCol(currentCol)).toString().contains("TA") || dataTable.getValueAt(rowIndex, findCol(currentCol)).toString().contains("TA")) {
+    			if(isNumber && Double.parseDouble((dataTable.getValueAt(rowIndex, findCol(currentCol)).toString())) != 0) { //excludes columns that already contain values
     				columns.remove(i);
     				i--;
     			} else if(currentCol.contains("AVG")) { //filters out all columns containing "AVG"
@@ -502,10 +564,11 @@ public class ResultsPanel extends JPanel implements ActionListener {
     			} else if(muscleNameArray[1] != null && !currentCol.contains(muscleNameArray[1])){ //filters out all wrong muscle columns
     				columns.remove(i);
     				i--;
-    			} else if(muscleNameArray[3] != null && !columns.get(i).contains(muscleNameArray[3])){ //filters out all non "CS" columns
+    			//} else if(muscleNameArray[3] != null && !columns.get(i).contains(muscleNameArray[3])){ //filters out all non "CSA" columns
+    			} else if(!columns.get(i).contains("CS") && muscleNameArray[3] != null){ //filters out all non "CSA" columns
     				columns.remove(i);
     				i--;
-    			} else if(muscleNameArray[3] == null && columns.get(i).contains("CS")){ //filters out all columns containing "CS"
+    			} else if(muscleNameArray[3] == null && columns.get(i).contains("CSA")) {
     				columns.remove(i);
     				i--;
     			} else if(columns.get(i).contains("EL")){ //filters out all "EL" (elastography) columns
@@ -516,7 +579,6 @@ public class ResultsPanel extends JPanel implements ActionListener {
     				i--;
     			}
     		}
-    		System.out.println("Columns: " + columns);
     		//TODO
     	}
     	
@@ -559,7 +621,6 @@ public class ResultsPanel extends JPanel implements ActionListener {
     		} else {
     			percentAdj = "75";
     		}
-    		System.out.println("Adjusted: " + percentAdj);
     		
     		for(int i = 0; i < rows.size(); i++) {    			
     			String currentRow = rows.get(i);
@@ -619,7 +680,41 @@ public class ResultsPanel extends JPanel implements ActionListener {
     	for(int i = 0; i < typeArr.length; i++) {
     		int[] coords = autoGetPlacement(typeArr[i]);
     		System.out.println("Coords : " + coords[0] + ", " + coords[1]);
+    		
     		if(coords[0] != -1 && coords[1] != -1) { //checks if a proper location has been found
+    			placeBtn.setText("Place:  " + dataTable.getValueAt(0, coords[1]).toString());
+    			placeBtn.setEnabled(true);
+    		}
+    		
+    		placementLabel2.setText(typeArr[i] + " | " + valueArr[i]);
+			dataTable.getSelectionModel().clearSelection();
+			while (dataTable.getSelectionModel().isSelectionEmpty()) { //wait for user to select a cell on the data table
+				try {
+					Thread.sleep(300);
+					if(doSkip == true) {
+						doSkip = false;
+						break;
+					} else if (!dataTable.getSelectionModel().isSelectionEmpty()) {
+						dataTable.setValueAt(valueArr[i], dataTable.getSelectedRow(), dataTable.getSelectedColumn());
+					} else if (doPlace == true) {
+						doPlace = false;
+						dataTable.setValueAt(valueArr[i], coords[0], coords[1]); //places value automatically
+						break;
+					}
+				} catch (Exception e) {
+					System.err.println(e);
+				}
+			}
+			dataTable.repaint();
+    		   		
+    		
+    		placeBtn.setText("<html><center>Place:");
+    		placeBtn.setEnabled(false);
+    		
+    		
+    		/*
+    		if(coords[0] != -1 && coords[1] != -1) { //checks if a proper location has been found
+    			
     			dataTable.setValueAt(valueArr[i], coords[0], coords[1]); //places value
     		} else { //if no proper location is found, then it prompts the user to place the value
     			placementLabel2.setText(typeArr[i] + " | " + valueArr[i]);
@@ -638,7 +733,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
     				}
     			}
     			dataTable.repaint();
-    		}
+    		} */
     	}
     	dataTable.getSelectionModel().clearSelection(); //resets various GUI elements
     	placementLabel2.setText("no value");

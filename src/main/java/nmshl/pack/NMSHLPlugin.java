@@ -58,20 +58,34 @@ public class NMSHLPlugin extends ImageJ implements PlugIn {
 			    	handleClosing();
 			    }
 			});
-			measurementFrame.add(measurementPanel, BorderLayout.CENTER);
-			measurementFrame.pack();
-			measurementPanel.disableAllBtn();
-			measurementFrame.setVisible (true);    
-        
+			
 			tableFrame.setDefaultCloseOperation (JFrame.DO_NOTHING_ON_CLOSE);
 			tableFrame.addWindowListener(new WindowAdapter() {
 			    public void windowClosing(WindowEvent e) {
 			    	handleClosing();
 			    }
 			});
+			
+			measurementFrame.add(measurementPanel, BorderLayout.CENTER);
+			measurementPanel.disableAllBtn();
+			measurementFrame.pack();
+			
 			tableFrame.add(tablePanel, BorderLayout.CENTER);
 			tableFrame.pack();
-			tableFrame.setVisible (true);  
+			
+			Dimension plugDimension = plug.getSize();
+			Point plugPoint = plug.getLocation();
+			measurementFrame.setResizable(false);
+			measurementFrame.setLocation((int)(plugPoint.x) + (int)(plugDimension.width),  (int)(plugPoint.y));
+			//measurementFrame.setMaximumSize(new Dimension(200, 200)); //size of measurementFrame randomly increased during runtime, setting maximum size to smaller than the panel seems to fix that
+			
+			Dimension measureDimension = measurementFrame.getSize();
+			Point measurePoint = measurementFrame.getLocation();
+			tableFrame.setLocation((int)(measurePoint.x),  (int)(plugPoint.y) + (int)(measureDimension.height));
+			tableFrame.setMinimumSize(new Dimension(686, 100));
+						
+			measurementFrame.setVisible (true);   
+			tableFrame.setVisible (true); 
 			
 			firstRun = false;
 		}
@@ -237,21 +251,24 @@ public class NMSHLPlugin extends ImageJ implements PlugIn {
 	 */
 	public void m5() { 
 		autoFrameClosed = false;
-		JFrame autoFrame = new JFrame ("Auto EI");
+		JFrame autoFrame = new JFrame ("Cross-Sectional - Auto");
 		AutoPanel autoPanel = new AutoPanel();
-		autoFrame.add(autoPanel, BorderLayout.CENTER);
-		autoFrame.pack();
-		autoFrame.setVisible (true);
+		
 		autoFrame.addWindowListener(new WindowAdapter() {
 		    public void windowClosing(WindowEvent e) {
 		    	System.out.println("exited");
 		    	autoPanel.handleClose();
 		    	autoFrameClosed = true;
 		    }
-		});
+		});	
 		
-		autoFrame.setLocation(500, 500); //TODO fix location to be related to other frames
-		
+		autoFrame.add(autoPanel, BorderLayout.CENTER);
+		autoFrame.pack();
+		Point tablePoint = tableFrame.getLocation();
+		Dimension tableDimension = tableFrame.getSize();
+		autoFrame.setLocation((int)(tablePoint.x) + ((int)(tableDimension.width) - 315),  (int)(tablePoint.y) + (int)(tableDimension.height));
+		autoFrame.setResizable(false);
+		autoFrame.setVisible (true);	
 		
 		for(int i = 0; i < muscleNameArray.length; i++) {
 			System.out.print(muscleNameArray[i] + ", ");
@@ -285,6 +302,12 @@ public class NMSHLPlugin extends ImageJ implements PlugIn {
 			case 3:
 				autoPanel.doCalculate();
 				break;
+			case 4:
+				autoPanel.addFilter();
+				break;
+			case 5:
+				autoPanel.subFilter();
+				break;
 			}
 		}
 	}
@@ -316,27 +339,41 @@ public class NMSHLPlugin extends ImageJ implements PlugIn {
 	 */
 	public static String readImageName(ImagePlus img) { 
 		String imageName = "";
-		int[] pixelRow = new int[300];
+		int[] pixelRow = new int[500];
 		String stringRow = "";
 		float currentPixel;
 		ColorProcessor newProcessor = (ColorProcessor)(img.getProcessor());
-
-		for(int i = 100; i < 400; i++) { //loops through a single line of pixels
+		int[] rgb = new int[3];
+		
+		for(int i = 100; i < 600; i++) { //loops through a single line of pixels
+			rgb = newProcessor.getPixel(i, 738, (int[])(newProcessor.getPixels()));
+			currentPixel = newProcessor.getPixelValue(i, 738);
+			if(currentPixel > 100 && (rgb[0] > (rgb[1] * 0.70) && rgb[2] > (rgb[1] * 0.70))) { //stores the value of the pixel as 1 if it is above the threshold]
+				//System.out.println(i + ": " + currentPixel + " R: " + rgb[0] + " G: " + rgb[1] + " B: " + rgb[2]);
+				pixelRow[i-100] = 1;
+			} else {
+				pixelRow[i-100] = 0; //stores the value of the pixel as 0 if it is below the threshold
+			}
+		}
+		
+		
+		/*
+		for(int i = 100; i < 600; i++) { //loops through a single line of pixels
 			currentPixel = newProcessor.getPixelValue(i, 738);
 			if(currentPixel > 100) { //stores the value of the pixel as 1 if it is above the threshold
 				pixelRow[i-100] = 1;
 			} else {
 				pixelRow[i-100] = 0; //stores the value of the pixel as 0 if it is below the threshold
 			}
-		}
-		for(int i = 0; i < 300; i++) { //Loops through pixelRow[] to combine all values into a single string
+		} */
+		for(int i = 0; i < 500; i++) { //Loops through pixelRow[] to combine all values into a single string
 			stringRow += String.valueOf(pixelRow[i]);
 			//System.out.print(String.valueOf(pixelRow[i]));
 		}
 		//System.out.println("");
 		
 		int wordCount = 0;
-		for(int i = 0; i < 300; i++) { // TODO NEED TO ADD ERROR HANDLING HERE
+		for(int i = 0; i < 500; i++) { // TODO NEED TO ADD ERROR HANDLING HERE
 			int startIndex;
 			int endIndex;
 			int zeroCount = 0;
@@ -346,7 +383,7 @@ public class NMSHLPlugin extends ImageJ implements PlugIn {
 				endIndex = i;
 				i++;
 				
-				while(zeroCount < 18 && i < 300) { //loops through the rest of the pixels, stops the word if there are too many 0 values
+				while(zeroCount < 18 && i < 500) { //loops through the rest of the pixels, stops the word if there are too many 0 values
 					if(pixelRow[i] == 1) {
 						endIndex = i + 1;
 						zeroCount = 0;
@@ -357,13 +394,14 @@ public class NMSHLPlugin extends ImageJ implements PlugIn {
 				}
 				imageName += recognizeLetter(stringRow.substring(startIndex, endIndex));
 				wordCount++;
+				/*
 				if(wordCount >= 6) {
 					//System.out.println(imageName);
 					if((muscleNameArray[1] != null && muscleNameArray[1].contentEquals("TA")) && muscleNameArray[4] == null) {
 						muscleNameArray[4] = "120";
 					}
 					return(imageName);
-				}
+				} */
 			}
 		}
 		//System.out.println(imageName);
@@ -383,43 +421,88 @@ public class NMSHLPlugin extends ImageJ implements PlugIn {
         case "111": //L
         	muscleNameArray[0] = "L";
         	return("L_");
-        case "11111111111": //R
+        //case "11111111111": //R
+        case "1111111111": //R
         	muscleNameArray[0] = "R";
         	return("R_");
-        case "111100000001111000001111111111": //MG
+        //case "111100000001111000001111111111": //MG
+        case "11100000001110000001111111111": //MG
         	muscleNameArray[1] = "MG";
         	return("MG_");
         case "1110000000000000001111111111": //LG
         	muscleNameArray[1] = "LG";
         	return("LG_");
-        case "11111111111111111000001111": //TA
+        //case "11111111111111111000001111": //TA
+        case "1111111111111110000000111": //TA
         	muscleNameArray[1] = "TA";
         	return("TA_");
-        case "111100000011": //25
+        case "11100000000000000111111111": //LO
+        	
+        	return("EL_");
+        //case "111100000011": //25
+        case "11000000011": //25
         	muscleNameArray[2] = "25";
         	return("25_");
-        case "11000000000000011100000111": //50
+        //case "11000000000000011100000111": //50
+        case "1100000000000001100000001": //50
         	muscleNameArray[2] = "50";
         	return("50_");
-        case "1110000011": //75
+        //case "1110000011": //75
+        case "1100000011": //75
         	muscleNameArray[2] = "75";
         	return("75_");
-        case "11110000011100000111": //20
+        //case "11110000011100000111": //20
+        case "110000001100000001": //20
         	muscleNameArray[2] = "20";
         	return("20_");
-        case "1111100000011100000111": //40
+        //case "1111100000011100000111": //40
+        case "111100000001100000001": //40
         	muscleNameArray[2] = "40";
         	return("40_");
         case "11100000000000011100000111": //60
         	muscleNameArray[2] = "60";
         	return("60_");
-        case "1111111111100001111111111": //CS
-        	muscleNameArray[3] = "CS";
+        //case "1111111111100001111111111": //CS
+        case "1111111111000001111111111": //CS
         	return("CS_");
-        case "11100000111": //0
+        //case "1111111111100001111111111000000001111": //CSA
+        case "1111111111000001111111111000000000111": //CSA
+        	muscleNameArray[3] = "CSA";
+        	return("CSA_");
+        //case "111111111110000011111111111": //BR
+        case "11111111110000001111111111": //BR
+        	
+        	return("BR_");
+        //case "1111111111110000111": //EL
+        case "1111111111100000111": //EL
+        	
+        	return("EL_");
+        //case "111000001110000011100000111": //90
+        case "11000000011000001100000001": //90
         	muscleNameArray[4] = "90";
         	return("90_");
+        //case "1111111111110001111111111111": //EI
+        case "111111111110000011111111111": //EI
+        	
+        	return("EI_");
+        //case "111111111111111101110000000111": //TH
+        case "11111111111111100011000000011": //TH
+        	
+        	return("TH_");
+        case "1111111111111111101110000000111": //TH // for some reason the "T" varies by one pixel from time to time
+        	
+        	return("TH_");
+        case "1100011": //1
+        	
+        	return("1_");
+        case "11": //2
+        	
+        	return("2_");
+        case "1111111111100001110000000010000001111111111": //INS
+        	
+        	return("INS_");
         default: 
+        	System.out.println("Not Recognized: " + binarySeries);
         	return("null_");
         }
 	}
@@ -437,14 +520,6 @@ public class NMSHLPlugin extends ImageJ implements PlugIn {
 		plug.exitWhenQuitting(true);
         Point center = GraphicsEnvironment.getLocalGraphicsEnvironment().getCenterPoint();
         plug.setLocation((center.x) - (int)(center.x * 0.9), (center.y) - (int)(center.y * 0.9));
-		Dimension tempDimension = plug.getSize();
-		Point tempPoint = plug.getLocation();
-		measurementFrame.setResizable(false);
-		measurementFrame.setLocation((int)(tempPoint.x) + (int)(tempDimension.getWidth()),  (int)(tempPoint.y));
-		measurementFrame.setMaximumSize(new Dimension(200, 200)); //size of measurementFrame randomly increased during runtime, setting maximum size to smaller than the panel seems to fix that
-		tableFrame.setLocation((int)(tempPoint.x) + (int)(tempDimension.getWidth()),  (int)(tempPoint.y) + (int)(tempDimension.getHeight()));
-		tableFrame.setSize(669, 179);
-		tableFrame.setMinimumSize(new Dimension(686, 100));
 		
 		do {
 			((PlugIn)(plug)).run("");

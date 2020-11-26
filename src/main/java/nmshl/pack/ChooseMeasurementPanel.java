@@ -31,7 +31,7 @@ public class ChooseMeasurementPanel extends JPanel implements ActionListener {
         m2Btn = new JButton ("<html><center>Total Area Sweep of<p>Gastroc and the TA<p>OR<p>Echo Intensity for TA");
         m3Btn = new JButton ("<html><center>Echo intensity for MG<p>and LG on Whole<p>Sweep");
         m4Btn = new JButton ("<html><center>Cross-Sectional Echo<p>Intensity");
-        m5Btn = new JButton ("<html><center>Auto Testing");
+        m5Btn = new JButton ("<html><center>AUTO: <p>Cross-Sectional <p>Echo Intensity");
         
         //set margins for each component
         m0Btn.setMargin(new Insets(0, 0, 0, 0));
@@ -86,22 +86,31 @@ public class ChooseMeasurementPanel extends JPanel implements ActionListener {
         m4Btn.addActionListener(this);
         m5Btn.addActionListener(this);
         
+        /*
         FlowLayout newLayout = new FlowLayout(FlowLayout.LEFT);
         newLayout.setVgap(1);
         newLayout.setHgap(1);
         setLayout(newLayout);
+        */
         
-        m0Btn.setPreferredSize(new Dimension (169,70));
-        m2Btn.setPreferredSize(new Dimension (169,70));
-        m3Btn.setPreferredSize(new Dimension (169,70));
-        m4Btn.setPreferredSize(new Dimension (169,70));
-        m5Btn.setPreferredSize(new Dimension (169,70));
+        GridLayout newLayout = new GridLayout();
+        newLayout.setVgap(1);
+        newLayout.setHgap(1);
+        setLayout(newLayout);
         
-        add(m4Btn, BorderLayout.CENTER);
-        add(m2Btn, BorderLayout.CENTER);
-        add(m3Btn, BorderLayout.CENTER);
-        add(m0Btn, BorderLayout.CENTER);
-        add(m5Btn, BorderLayout.CENTER);
+        //m0Btn.setPreferredSize(new Dimension (169,70));
+        //m2Btn.setPreferredSize(new Dimension (169,70));
+        //m3Btn.setPreferredSize(new Dimension (169,70));
+        //m4Btn.setPreferredSize(new Dimension (169,70));
+        //m5Btn.setPreferredSize(new Dimension (169,70));
+        
+        setPreferredSize(new Dimension(675,70));
+        
+        add(m4Btn);
+        add(m2Btn);
+        add(m3Btn);
+        add(m0Btn);
+        add(m5Btn);
     }
     
     /*
