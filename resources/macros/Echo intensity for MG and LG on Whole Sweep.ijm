@@ -94,15 +94,12 @@
                     t = replace(t, ".jpeg", "");
                     t = replace(t, ".tif", "");
                     selectWindow(title);
-                    test1 = File.exists(path+t+"P.tif");
-                    test2 = File.exists(path+t+"P2.tif");
-                    if(test1 == 1) {
-                        saveAs("tiff",path+t+"P2");
-                    } else if (test2 == 1) {
-                        saveAs("tiff",path+t+"P3");
-                    } else {
-                        saveAs("tiff",path+t+"P");
+                    count = 1;
+                    while(File.exists(path+t+"P"+count+".tif")){
+                        count++;
                     }
+
+                    saveAs("tiff",path+t+"P"+count);
                 }
                 //run("Clear Results");
 		result += " " + lateralArea;

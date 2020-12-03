@@ -9,16 +9,20 @@ import javax.swing.*;
 
 import java.io.*;
 import java.nio.file.*;
+import java.util.ArrayList;
+
 import ij.io.OpenDialog;
 import ij.gui.*;
 
 public class ChooseMeasurementPanel extends JPanel implements ActionListener {
+    private ArrayList<JButton> btnList = new ArrayList<JButton>();
 	private JButton m0Btn;
     private JButton m1Btn;
     private JButton m2Btn;
     private JButton m3Btn;
     private JButton m4Btn;
     private JButton m5Btn;
+    private JButton m6Btn;
     
     private volatile boolean answered0 = false;
     private int chosenBtn0 = -1;
@@ -28,70 +32,22 @@ public class ChooseMeasurementPanel extends JPanel implements ActionListener {
         //construct components
         m0Btn = new JButton ("<html><center>Muscle Thickness and<p>Pennation Angle<p>for MG, LG, and TA");
         m1Btn = new JButton ("<html><center>Elastography");
-        m2Btn = new JButton ("<html><center>Total Area Sweep of<p>Gastroc and the TA<p>OR<p>Echo Intensity for TA");
+        m2Btn = new JButton ("<html><center>Total Area Sweep <p>of Gastroc <p>and the TA");
         m3Btn = new JButton ("<html><center>Echo intensity for MG<p>and LG on Whole<p>Sweep");
         m4Btn = new JButton ("<html><center>Cross-Sectional Echo<p>Intensity");
         m5Btn = new JButton ("<html><center>AUTO: <p>Cross-Sectional <p>Echo Intensity");
-        
-        //set margins for each component
-        m0Btn.setMargin(new Insets(0, 0, 0, 0));
-        m1Btn.setMargin(new Insets(0, 0, 0, 0));
-        m2Btn.setMargin(new Insets(0, 0, 0, 0));
-        m3Btn.setMargin(new Insets(0, 0, 0, 0));
-        m4Btn.setMargin(new Insets(0, 0, 0, 0));
-        m5Btn.setMargin(new Insets(0, 0, 0, 0));
-        
-        //sets fonts for all buttons
-        m0Btn.setFont(new Font("Arial", Font.PLAIN, 12));
-        m1Btn.setFont(new Font("Arial", Font.PLAIN, 12));
-        m2Btn.setFont(new Font("Arial", Font.PLAIN, 12));
-        m3Btn.setFont(new Font("Arial", Font.PLAIN, 12));
-        m4Btn.setFont(new Font("Arial", Font.PLAIN, 12));
-        m5Btn.setFont(new Font("Arial", Font.PLAIN, 12));
-        
-        //create custom color and set the components to that color
-        Color lightGray = new Color(234, 234, 234);
-        m0Btn.setBackground(lightGray);
-        m1Btn.setBackground(lightGray);
-        m2Btn.setBackground(lightGray);
-        m3Btn.setBackground(lightGray);
-        m4Btn.setBackground(lightGray);
-        m5Btn.setBackground(lightGray);
+        m6Btn = new JButton ("<html><center>Echo Intensity <p>for TA");
 
-        //adjust size and set layout
-        //setPreferredSize (new Dimension (669, 68));
-        setLayout (null);
-        
-        //Creates tooltips for each button to display when the buttons are hovered over
-        m0Btn.setToolTipText ("Muscle Thickness and Pennation Angle for MG, LG, and TA");
-        m1Btn.setToolTipText ("Elastography");
-        m2Btn.setToolTipText ("Total Area Sweep of Gastroc and the TA / Echo Intensity for TA");
-        m3Btn.setToolTipText ("Echo intensity for MG and LG on Whole Sweep");
-        m4Btn.setToolTipText ("Cross-Sectional Echo Intensity");
-        m5Btn.setToolTipText ("Auto Testing");
-        
-        // set action commands for all buttons
-        m0Btn.setActionCommand("m0");
-        m1Btn.setActionCommand("m1");
-        m2Btn.setActionCommand("m2");
-        m3Btn.setActionCommand("m3");
-        m4Btn.setActionCommand("m4");
-        m5Btn.setActionCommand("m5");
-        
-        //Listen for actions from the buttons
-        m0Btn.addActionListener(this);
-        m1Btn.addActionListener(this);
-        m2Btn.addActionListener(this);
-        m3Btn.addActionListener(this);
-        m4Btn.addActionListener(this);
-        m5Btn.addActionListener(this);
-        
-        /*
-        FlowLayout newLayout = new FlowLayout(FlowLayout.LEFT);
-        newLayout.setVgap(1);
-        newLayout.setHgap(1);
-        setLayout(newLayout);
-        */
+        addBtn(m0Btn, "Muscle Thickness and Pennation Angle for MG, LG, and TA", "m0");
+        addBtn(m1Btn, "Elastography", "m1");
+        addBtn(m2Btn, "Total Area Sweep of Gastroc and the TA / Echo Intensity for TA", "m2");
+        addBtn(m3Btn, "Echo intensity for MG and LG on Whole Sweep", "m3");
+        addBtn(m4Btn, "Cross-Sectional Echo Intensity", "m4");
+        addBtn(m5Btn, "Auto Testing", "m5");
+        addBtn(m6Btn, "Echo Intensity for TA", "m6");
+
+
+        setLayout(null);
         
         GridLayout newLayout = new GridLayout();
         newLayout.setVgap(1);
@@ -108,69 +64,30 @@ public class ChooseMeasurementPanel extends JPanel implements ActionListener {
         
         add(m4Btn);
         add(m2Btn);
+        add(m6Btn);
         add(m3Btn);
         add(m0Btn);
         add(m5Btn);
     }
-    
+
+    private void addBtn(JButton btn, String tooltip, String actionCommand){
+        btnList.add(btn);
+        btn.setMargin(new Insets(0, 0, 0, 0));
+        btn.setFont(new Font("Arial", Font.PLAIN, 12));
+        Color lightGray = new Color(234, 234, 234);
+        btn.setBackground(lightGray);
+        btn.setToolTipText (tooltip);
+        btn.setActionCommand(actionCommand);
+        btn.addActionListener(this);
+
+    }
     /*
      * Defines the different actions performed when any of the buttons are pressed
      */
     public void actionPerformed(ActionEvent e) {
-        if ("m0".equals(e.getActionCommand())) {
-        	chosenBtn0 = 0;
-        	answered0 = true;
-            m0Btn.setEnabled(false);
-            m1Btn.setEnabled(true);
-            m2Btn.setEnabled(true);
-            m3Btn.setEnabled(true);
-            m4Btn.setEnabled(true);
-            m5Btn.setEnabled(true);
-        } else  if ("m1".equals(e.getActionCommand())){
-        	chosenBtn0 = 1;
-        	answered0 = true;
-            m0Btn.setEnabled(true);
-            m1Btn.setEnabled(false);
-            m2Btn.setEnabled(true);
-            m3Btn.setEnabled(true);
-            m4Btn.setEnabled(true);
-            m5Btn.setEnabled(true);
-        } else  if ("m2".equals(e.getActionCommand())){
-        	chosenBtn0 = 2;
-        	answered0 = true;
-            m0Btn.setEnabled(true);
-            m1Btn.setEnabled(true);
-            m2Btn.setEnabled(false);
-            m3Btn.setEnabled(true);
-            m4Btn.setEnabled(true);
-            m5Btn.setEnabled(true);
-        } else  if ("m3".equals(e.getActionCommand())){
-        	chosenBtn0 = 3;
-        	answered0 = true;
-            m0Btn.setEnabled(true);
-            m1Btn.setEnabled(true);
-            m2Btn.setEnabled(true);
-            m3Btn.setEnabled(false);
-            m4Btn.setEnabled(true);
-            m5Btn.setEnabled(true);
-        } else  if ("m4".equals(e.getActionCommand())){
-        	chosenBtn0 = 4;
-        	answered0 = true;
-            m0Btn.setEnabled(true);
-            m1Btn.setEnabled(true);
-            m2Btn.setEnabled(true);
-            m3Btn.setEnabled(true);
-            m4Btn.setEnabled(false);
-            m5Btn.setEnabled(true);
-        } else if("m5".equals(e.getActionCommand())){
-        	chosenBtn0 = 5;
-        	answered0 = true;
-            m0Btn.setEnabled(true);
-            m1Btn.setEnabled(true);
-            m2Btn.setEnabled(true);
-            m3Btn.setEnabled(true);
-            m4Btn.setEnabled(true);
-            m5Btn.setEnabled(false);
+        if(!e.getActionCommand().equals(null)){
+            chosenBtn0 = Integer.parseInt(e.getActionCommand().substring(1));
+            answered0 = true;
         }
     }
     
@@ -192,24 +109,18 @@ public class ChooseMeasurementPanel extends JPanel implements ActionListener {
      * Calls setEnabled(false) for all buttons in the panel
      */
     public void disableAllBtn() {
-    	m0Btn.setEnabled(false);
-        m1Btn.setEnabled(false);
-        m2Btn.setEnabled(false);
-        m3Btn.setEnabled(false);
-        m4Btn.setEnabled(false);
-        m5Btn.setEnabled(false);
+    	for(JButton btn : btnList){
+    	    btn.setEnabled(false);
+        }
     }
     
     /*
      * Calls setEnabled(true) for all buttons in the panel
      */
     public void enableAllBtn() {
-    	m0Btn.setEnabled(true);
-        m1Btn.setEnabled(true);
-        m2Btn.setEnabled(true);
-        m3Btn.setEnabled(true);
-        m4Btn.setEnabled(true);
-        m5Btn.setEnabled(true);
+        for(JButton btn : btnList){
+            btn.setEnabled(true);
+        }
     }
     
     /*

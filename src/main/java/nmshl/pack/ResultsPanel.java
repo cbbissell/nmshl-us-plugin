@@ -134,6 +134,9 @@ public class ResultsPanel extends JPanel implements ActionListener {
         int tempCount = 0;
         for(int i = 0; i < dataTable.getRowCount(); i++) {
         	for(int j = 0; j < dataTable.getColumnCount(); j++) {
+				if (defaultTable[tempCount].equals("0")) {
+					defaultTable[tempCount] = "";
+				}
         		dataTable.setValueAt(defaultTable[tempCount], i, j);
         		tempCount++;
         	}
@@ -519,10 +522,15 @@ public class ResultsPanel extends JPanel implements ActionListener {
     	if(!NMSHLPlugin.muscleNameArray[1].equals("TA")) { //TA images are excluded here and filtered in the else statement below
     		for(int i = 0; i < columns.size(); i++) {
     			String currentCol = columns.get(i);
-    			if(!dataTable.getValueAt(rowIndex, findCol(currentCol)).toString().contains("TA") && rowIndex >= 0 && Double.parseDouble((dataTable.getValueAt(rowIndex, findCol(currentCol)).toString())) != 0) {
+
+    			if(!dataTable.getValueAt(rowIndex, findCol(currentCol)).toString().contains("TA") && rowIndex >= 0
+						&& (!((dataTable.getValueAt(rowIndex, findCol(currentCol)).toString()).isEmpty()))) {
     				columns.remove(i);
     				i--;
     			} else if(currentCol.contains("AVG")) { //filters out all columns containing "AVG"
+					columns.remove(i);
+					i--;
+				} else if(currentCol.contains("AVG")) { //filters out all columns containing "AVG"
     				columns.remove(i);
     				i--;
     			} else if(muscleNameArray[1] != null && !currentCol.contains(muscleNameArray[1])){ //filters out all wrong muscle columns
@@ -555,8 +563,9 @@ public class ResultsPanel extends JPanel implements ActionListener {
     			}
     			
     			//if(dataTable.getValueAt(rowIndex, findCol(currentCol)).toString().contains("TA") || dataTable.getValueAt(rowIndex, findCol(currentCol)).toString().contains("TA")) {
-    			if(isNumber && Double.parseDouble((dataTable.getValueAt(rowIndex, findCol(currentCol)).toString())) != 0) { //excludes columns that already contain values
-    				columns.remove(i);
+    			//if(isNumber && Double.parseDouble((dataTable.getValueAt(rowIndex, findCol(currentCol)).toString())) != 0) { //excludes columns that already contain values
+				if(isNumber && (!((dataTable.getValueAt(rowIndex, findCol(currentCol)).toString()).isEmpty()))) { //excludes columns that already contain values
+					columns.remove(i);
     				i--;
     			} else if(currentCol.contains("AVG")) { //filters out all columns containing "AVG"
     				columns.remove(i);

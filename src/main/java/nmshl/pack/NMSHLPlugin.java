@@ -191,16 +191,18 @@ public class NMSHLPlugin extends ImageJ implements PlugIn {
 	/*
 	 * Describes the measuring protocol for "Elastography". Not functional currently as the Elastography button is never placed in the panel
 	 */
-	public void m1() { 
+	public void m1() {
+		measurementPanel.disableAllBtn();
 		Macro_Runner macroRunner = new Macro_Runner();
 		String currentDirectory = System.getProperty("user.dir");
 		String result = macroRunner.runMacroFile(currentDirectory + File.separator + "resources" + File.separator + "macros" + File.separator + "Elastography.ijm", "");
 	}
 	
 	/*
-	 * Describes the measuring protocol for "Total Area Sweep of Gastroc and the TA / Echo Intensity for TA"
+	 * Describes the measuring protocol for "Total Area Sweep of Gastroc and the TA"
 	 */
-	public void m2() { 
+	public void m2() {
+		measurementPanel.disableAllBtn();
 		Macro_Runner macroRunner = new Macro_Runner();
 		String currentDirectory = System.getProperty("user.dir");
 		String result = macroRunner.runMacroFile(currentDirectory + File.separator + "resources" + File.separator + "macros" + File.separator + "Total Area Sweep of Gastroc and the TA.ijm", "");
@@ -219,6 +221,7 @@ public class NMSHLPlugin extends ImageJ implements PlugIn {
 	 * Describes the measuring protocol for "Echo intensity for MG and LG on Whole Sweep"
 	 */
 	public void m3() {
+		measurementPanel.disableAllBtn();
 		Macro_Runner macroRunner = new Macro_Runner();
 		String currentDirectory = System.getProperty("user.dir");
 		String result = macroRunner.runMacroFile(currentDirectory + File.separator+ "resources" + File.separator + "macros" + File.separator + "Echo intensity for MG and LG on Whole Sweep.ijm", "");
@@ -237,6 +240,7 @@ public class NMSHLPlugin extends ImageJ implements PlugIn {
 	 * Describes the measuring protocol for "Cross-Sectional Echo Intensity"
 	 */
 	public void m4() {
+		measurementPanel.disableAllBtn();
 		Macro_Runner macroRunner = new Macro_Runner();
 		String currentDirectory = System.getProperty("user.dir");
 		String result = macroRunner.runMacroFile(currentDirectory + File.separator + "resources" + File.separator + "macros" + File.separator + "Cross-Sectional Echo Intensity.ijm", "");
@@ -249,7 +253,8 @@ public class NMSHLPlugin extends ImageJ implements PlugIn {
 	 * Performs semi-automatic measurement of Cross-Sectional Echo Intensity.
 	 * Opens a new AutoPanel that contains controls for semi-automated processing. 
 	 */
-	public void m5() { 
+	public void m5() {
+		measurementPanel.disableAllBtn();
 		autoFrameClosed = false;
 		JFrame autoFrame = new JFrame ("Cross-Sectional - Auto");
 		AutoPanel autoPanel = new AutoPanel();
@@ -311,6 +316,25 @@ public class NMSHLPlugin extends ImageJ implements PlugIn {
 			}
 		}
 	}
+
+	/*
+	 * Describes the measuring protocol for "Echo Intensity for TA"
+	 */
+	public void m6() {
+		measurementPanel.disableAllBtn();
+		Macro_Runner macroRunner = new Macro_Runner();
+		String currentDirectory = System.getProperty("user.dir");
+		String result = macroRunner.runMacroFile(currentDirectory + File.separator + "resources" + File.separator + "macros" + File.separator + "Total Area Sweep of Gastroc and the TA.ijm", "");
+		if(result != null && !result.equals("[aborted]")) { //Creates two arrays to be used by the storeValue() method in ResultsPanel
+			String[] splitResults = result.split(" ");
+			String[] types = new String[] {"Total Area", "Total Mean"};
+			double[] dResults = new double[splitResults.length];
+			for(int i = 0; i < splitResults.length; i++) {
+				dResults[i] = Double.parseDouble(splitResults[i]);
+			}
+			tablePanel.storeValue(dResults, types);
+		}
+	}
 	
 	/*
 	 * Returns the value of runAgain
@@ -348,7 +372,7 @@ public class NMSHLPlugin extends ImageJ implements PlugIn {
 		for(int i = 100; i < 600; i++) { //loops through a single line of pixels
 			rgb = newProcessor.getPixel(i, 738, (int[])(newProcessor.getPixels()));
 			currentPixel = newProcessor.getPixelValue(i, 738);
-			if(currentPixel > 100 && (rgb[0] > (rgb[1] * 0.70) && rgb[2] > (rgb[1] * 0.70))) { //stores the value of the pixel as 1 if it is above the threshold]
+			if(currentPixel > 50 && (rgb[0] > (rgb[1] * 0.65) && rgb[2] > (rgb[1] * 0.65))) { //stores the value of the pixel as 1 if it is above the threshold]
 				//System.out.println(i + ": " + currentPixel + " R: " + rgb[0] + " G: " + rgb[1] + " B: " + rgb[2]);
 				pixelRow[i-100] = 1;
 			} else {
@@ -408,6 +432,7 @@ public class NMSHLPlugin extends ImageJ implements PlugIn {
 		if((muscleNameArray[1] != null && muscleNameArray[1].contentEquals("TA")) && muscleNameArray[4] == null) {
 			muscleNameArray[4] = "120";
 		}
+		System.out.println(imageName);
 		return(imageName);
 	}
 	
@@ -417,6 +442,7 @@ public class NMSHLPlugin extends ImageJ implements PlugIn {
 	 * If the binarySeries is not recognized, returns null
 	 */
 	private static String recognizeLetter(String binarySeries) {
+		System.out.println(binarySeries);
 		switch(binarySeries) {
         case "111": //L
         	muscleNameArray[0] = "L";
@@ -426,7 +452,7 @@ public class NMSHLPlugin extends ImageJ implements PlugIn {
         	muscleNameArray[0] = "R";
         	return("R_");
         //case "111100000001111000001111111111": //MG
-        case "11100000001110000001111111111": //MG
+        case "111100000001110000001111111111": //MG
         	muscleNameArray[1] = "MG";
         	return("MG_");
         case "1110000000000000001111111111": //LG
@@ -444,7 +470,7 @@ public class NMSHLPlugin extends ImageJ implements PlugIn {
         	muscleNameArray[2] = "25";
         	return("25_");
         //case "11000000000000011100000111": //50
-        case "1100000000000001100000001": //50
+        case "11000000000000011100000011": //50
         	muscleNameArray[2] = "50";
         	return("50_");
         //case "1110000011": //75
@@ -452,14 +478,14 @@ public class NMSHLPlugin extends ImageJ implements PlugIn {
         	muscleNameArray[2] = "75";
         	return("75_");
         //case "11110000011100000111": //20
-        case "110000001100000001": //20
+        case "1100000011100000011": //20
         	muscleNameArray[2] = "20";
         	return("20_");
         //case "1111100000011100000111": //40
-        case "111100000001100000001": //40
+        case "1111000000011100000011": //40
         	muscleNameArray[2] = "40";
         	return("40_");
-        case "11100000000000011100000111": //60
+        case "11100000000000011100000011": //60
         	muscleNameArray[2] = "60";
         	return("60_");
         //case "1111111111100001111111111": //CS
@@ -478,7 +504,7 @@ public class NMSHLPlugin extends ImageJ implements PlugIn {
         	
         	return("EL_");
         //case "111000001110000011100000111": //90
-        case "11000000011000001100000001": //90
+        case "110000000110000011100000011": //90
         	muscleNameArray[4] = "90";
         	return("90_");
         //case "1111111111110001111111111111": //EI
@@ -486,7 +512,7 @@ public class NMSHLPlugin extends ImageJ implements PlugIn {
         	
         	return("EI_");
         //case "111111111111111101110000000111": //TH
-        case "11111111111111100011000000011": //TH
+        case "11111111111111100111000000011": //TH
         	
         	return("TH_");
         case "1111111111111111101110000000111": //TH // for some reason the "T" varies by one pixel from time to time
