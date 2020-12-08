@@ -54,19 +54,14 @@ public class ChooseMeasurementPanel extends JPanel implements ActionListener {
         newLayout.setHgap(1);
         setLayout(newLayout);
         
-        //m0Btn.setPreferredSize(new Dimension (169,70));
-        //m2Btn.setPreferredSize(new Dimension (169,70));
-        //m3Btn.setPreferredSize(new Dimension (169,70));
-        //m4Btn.setPreferredSize(new Dimension (169,70));
-        //m5Btn.setPreferredSize(new Dimension (169,70));
-        
-        setPreferredSize(new Dimension(675,70));
+        setPreferredSize(new Dimension(700,70));
         
         add(m4Btn);
         add(m2Btn);
         add(m6Btn);
         add(m3Btn);
         add(m0Btn);
+        add(m1Btn);
         add(m5Btn);
     }
 
@@ -79,7 +74,6 @@ public class ChooseMeasurementPanel extends JPanel implements ActionListener {
         btn.setToolTipText (tooltip);
         btn.setActionCommand(actionCommand);
         btn.addActionListener(this);
-
     }
     /*
      * Defines the different actions performed when any of the buttons are pressed
@@ -134,6 +128,7 @@ public class ChooseMeasurementPanel extends JPanel implements ActionListener {
      * Resets local variables
      */
     public void resetPanel() {
+        disableAllBtn();
     	chosenBtn0 = -1;   
     	answered0 = false;
     }

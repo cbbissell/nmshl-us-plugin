@@ -50,17 +50,23 @@ public class ResultsPanel extends JPanel implements ActionListener {
         //construct components
         importBtn = new JButton ("<html><center>Import Results");
         exportBtn = new JButton ("<html><center>Export Results");
-        placementLabel1 = new JLabel ("<html><center>Next value to be placed: ");
+		skipBtn = new JButton ("<html><center>Skip");
+		placeBtn = new JButton ("<html><center>Place");
+		renameBtn = new JButton ("<html><center>Rename Images");
+		averageBtn = new JButton ("<html><center>Average Values");
+
+		addBtn(importBtn, "Import data table from an existing file", "import");
+		addBtn(exportBtn, "Export current data table to a new file", "export");
+		addBtn(skipBtn, "Skip the current value being placed", "skip");
+		addBtn(placeBtn, "Place the current value in the stated column and row", "place");
+		addBtn(renameBtn, "Renames the images in a folder to match the names on images", "rename");
+		addBtn(averageBtn, "Average all columns with an \"AVG\" in their title", "average");
+
+        placementLabel1 = new JLabel ("<html><font color='white'>__</font><font color='red'>row</font>  |  <font color='blue'>column</font></html>");
         placementLabel2 = new JLabel ("<html><center>no value");
-        skipBtn = new JButton ("<html><center>skip value");
-        placeBtn = new JButton ("<html><center>Place:");
         placementAlert = new JLabel ("<html><center>Skip or place value");
-        renameBtn = new JButton ("<html><center>Rename Images");
-        renameBtn.setToolTipText ("Rename all images in selected folder to match each image's label");
-        averageBtn = new JButton ("<html><center>Average Values");
-        averageBtn.setToolTipText ("Average all columns with an \"AVG\" in their title");
-        
-        placeBtn.setHorizontalAlignment(SwingConstants.LEFT);
+
+		placementLabel2.setHorizontalAlignment(SwingConstants.CENTER);
         placementAlert.setHorizontalAlignment(SwingConstants.CENTER);
         
         //gets the number of rows and columns from the default table
@@ -77,58 +83,23 @@ public class ResultsPanel extends JPanel implements ActionListener {
         for(int i = 0; i < cols; i++) {
         	dataTable.getColumnModel().getColumn(i).setPreferredWidth(110);
         }
-        
-        //set margins for each component
-        importBtn.setMargin(new Insets(0, 0, 0, 0));
-        exportBtn.setMargin(new Insets(0, 0, 0, 0));
-        skipBtn.setMargin(new Insets(0, 0, 0, 0));
-        placeBtn.setMargin(new Insets(0, 0, 0, 0));
+
         dataTable.setRowMargin(0);
-        renameBtn.setMargin(new Insets(0, 0, 0, 0));
-        averageBtn.setMargin(new Insets(0, 0, 0, 0));
-        
-        //sets fonts for all buttons
-        importBtn.setFont(new Font("Arial", Font.PLAIN, 12));
-        exportBtn.setFont(new Font("Arial", Font.PLAIN, 12));
+
+        //sets fonts for components
         placementLabel1.setFont(new Font("Arial", Font.PLAIN, 12));
         placementLabel2.setFont(new Font("Arial", Font.PLAIN, 12));
-        skipBtn.setFont(new Font("Arial", Font.PLAIN, 12));
-        placeBtn.setFont(new Font("Arial", Font.PLAIN, 12));
         placementAlert.setFont(new Font("Arial", Font.PLAIN, 12));
         dataTable.setFont(new Font("Arial", Font.PLAIN, 12));
-        renameBtn.setFont(new Font("Arial", Font.PLAIN, 12));
-        averageBtn.setFont(new Font("Arial", Font.PLAIN, 12));
         
         //create custom color and set the components to that color
         Color lightGray = new Color(234, 234, 234);
-        importBtn.setBackground(lightGray);
-        exportBtn.setBackground(lightGray);
         placementLabel1.setBackground(lightGray);
         placementLabel2.setBackground(lightGray);
-        skipBtn.setBackground(lightGray);
-        placeBtn.setBackground(lightGray);
         placementAlert.setBackground(lightGray);
         placementAlert.setForeground(Color.RED);
         dataTable.setBackground(lightGray);
         dataTable.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-        renameBtn.setBackground(lightGray);
-        averageBtn.setBackground(lightGray);
-
-        // set action commands for all buttons
-        importBtn.setActionCommand("import");
-        exportBtn.setActionCommand("export");
-        skipBtn.setActionCommand("skip");
-        placeBtn.setActionCommand("place");
-        renameBtn.setActionCommand("rename");
-        averageBtn.setActionCommand("average");
-        
-        //Listen for actions from the buttons
-        importBtn.addActionListener(this);
-        exportBtn.addActionListener(this);
-        skipBtn.addActionListener(this);
-        placeBtn.addActionListener(this);
-        renameBtn.addActionListener(this);
-        averageBtn.addActionListener(this);
         
         //Fills in the dataTable with the values from the default table
         int tempCount = 0;
@@ -142,61 +113,62 @@ public class ResultsPanel extends JPanel implements ActionListener {
         	}
         }
         
-        
-        JPanel mainPane = new JPanel();
-        JPanel p1 = new JPanel();
-        JPanel p2 = new JPanel();
-        
         //setup Scroll Pane and data table within the scroll pane
         scrollPane = new JScrollPane(dataTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         dataTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         dataTable.setDragEnabled(false);    
         
-        importBtn.setPreferredSize(new Dimension(167, 15));
-        exportBtn.setPreferredSize(new Dimension(167, 15));
-        placementLabel1.setPreferredSize(new Dimension(150, 17));
-        placementLabel2.setPreferredSize(new Dimension(150, 17));
-        skipBtn.setPreferredSize(new Dimension(70, 17));
-        placeBtn.setPreferredSize(new Dimension(131, 17));
-        placementAlert.setPreferredSize(new Dimension(150,17));
-        renameBtn.setPreferredSize(new Dimension(167, 15));
-        averageBtn.setPreferredSize(new Dimension(167, 15));
-        
-        BorderLayout layout1 = new BorderLayout();
-        layout1.setHgap(1);
-        layout1.setVgap(1);
-        setLayout(layout1);
-        
-        FlowLayout layout2 = new FlowLayout(FlowLayout.LEADING);
-        layout2.setHgap(0);
-        layout2.setVgap(0);
-        p1.setLayout(layout2);
-        p2.setLayout(layout2);
-        
-        BoxLayout layout3 = new BoxLayout(mainPane, BoxLayout.Y_AXIS);
-        mainPane.setLayout(layout3);
-        
-    	p1.setSize(new Dimension(669, 50));
-    	p2.setSize(new Dimension(669,50));
-        
-        p1.add(importBtn, BorderLayout.CENTER);
-        p1.add(exportBtn);
-        p1.add(averageBtn);
-        p1.add(renameBtn);
-        
-        p2.add(placementLabel1);
-        p2.add(placementLabel2);
-        p2.add(skipBtn);
-        p2.add(placeBtn);
-        p2.add(placementAlert);
-    	
-    	mainPane.add(p1, BorderLayout.NORTH);
-    	mainPane.add(p2);
-    	add(scrollPane);
-    	
-    	add(mainPane, BorderLayout.NORTH);
-    	add(scrollPane, BorderLayout.CENTER);
-    	setPreferredSize(new Dimension(668,57 + (rows * 18)));
+//        importBtn.setPreferredSize(new Dimension(167, 15));
+//        exportBtn.setPreferredSize(new Dimension(167, 15));
+//        placementLabel1.setPreferredSize(new Dimension(150, 17));
+//        placementLabel2.setPreferredSize(new Dimension(150, 17));
+//        skipBtn.setPreferredSize(new Dimension(70, 17));
+//        placeBtn.setPreferredSize(new Dimension(131, 17));
+//        placementAlert.setPreferredSize(new Dimension(150,17));
+//        renameBtn.setPreferredSize(new Dimension(167, 15));
+//        averageBtn.setPreferredSize(new Dimension(167, 15));
+
+		JPanel mainPane = new JPanel();
+		mainPane.setMaximumSize(new Dimension(672, 50));
+		JPanel topPane = new JPanel();
+		JPanel midPane = new JPanel();
+		JPanel botPane = new JPanel();
+
+		GridLayout gridLayout1 = new GridLayout();
+		gridLayout1.setHgap(1);
+		gridLayout1.setVgap(1);
+
+		topPane.setLayout(gridLayout1);
+		topPane.add(importBtn);
+		topPane.add(exportBtn);
+		topPane.add(averageBtn);
+		topPane.add(renameBtn);
+
+		midPane.setLayout(gridLayout1);
+		midPane.add(placeBtn);
+		midPane.add(placementLabel2);
+		midPane.add(skipBtn);
+		midPane.add(placementAlert);
+
+		botPane.setLayout(gridLayout1);
+		botPane.add(placementLabel1);
+
+		GridLayout gridLayout2 = new GridLayout(3,1, 1, 1);
+
+		mainPane.setLayout(gridLayout2);
+		mainPane.add(topPane);
+		mainPane.add(midPane);
+		mainPane.add(botPane);
+
+		BoxLayout layout1 = new BoxLayout(this, BoxLayout.PAGE_AXIS);
+		setLayout(layout1);
+
+		mainPane.setAlignmentX(LEFT_ALIGNMENT);
+		scrollPane.setAlignmentX(LEFT_ALIGNMENT);
+		add(mainPane);
+		add(scrollPane);
+
+		setPreferredSize(new Dimension(668,86 + (rows * 18)));
     	
     	skipBtn.setEnabled(false);
     	placeBtn.setEnabled(false);
@@ -204,6 +176,16 @@ public class ResultsPanel extends JPanel implements ActionListener {
     	
     	setVisible(true);
     }
+
+    private void addBtn(JButton btn, String tooltip, String actionCommand){
+		btn.setMargin(new Insets(0, 0, 0, 0));
+		btn.setFont(new Font("Arial", Font.PLAIN, 12));
+		Color lightGray = new Color(234, 234, 234);
+		btn.setBackground(lightGray);
+		btn.setToolTipText (tooltip);
+		btn.setActionCommand(actionCommand);
+		btn.addActionListener(this);
+	}
     
     /*
      * Defines the different actions performed when any of the buttons are pressed
@@ -278,7 +260,11 @@ public class ResultsPanel extends JPanel implements ActionListener {
         String content = "";
         for(int i = 0; i < dataTable.getRowCount(); i++) {
         	for(int j = 0; j < dataTable.getColumnCount(); j++) {
-        		content += dataTable.getValueAt(i, j);
+        		if(dataTable.getValueAt(i, j).toString() == null || dataTable.getValueAt(i, j).toString().isEmpty()){
+					content += " ";
+				} else {
+					content += dataTable.getValueAt(i, j);
+				}
         		content += ",";
         	}
         }
@@ -309,7 +295,8 @@ public class ResultsPanel extends JPanel implements ActionListener {
         	try {
         		file.createNewFile();
         		System.out.println("File is created!");
-        		System.out.println(file.exists());
+
+//        		System.out.println(file.exists());
         	} catch (Exception e) {
         		System.err.println(e);
         	}
@@ -332,7 +319,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
     	for(int i = 0; i < dataTable.getColumnCount(); i++) { //loops through all columns searching for "AVG" columns
     		String temp1 = dataTable.getValueAt(0, i).toString(); //String containing the name of the current "AVG" column name
     		
-    		if(temp1.contains("AVG")) { 
+    		if(temp1.contains("AVG")) {
     			String searchTerm = temp1.substring(0, temp1.length() - 3); //creates a substring of the "AVG" column without the "AVG" tag
     			boolean found = false;
     			
@@ -346,7 +333,8 @@ public class ResultsPanel extends JPanel implements ActionListener {
     						double average = 0;
     						
     						for(int l = j; l < i; l++) { //loops through the data columns containing the values
-    							if(Double.parseDouble(dataTable.getValueAt(k, l).toString()) != 0) { //ignores cell positions that are equal to 0
+    							if((dataTable.getValueAt(k, l).toString() != null && !dataTable.getValueAt(k, l).toString().isEmpty()) &&
+										Double.parseDouble(dataTable.getValueAt(k, l).toString()) != 0) { //ignores cell positions that are equal to 0
     								average += Double.parseDouble(dataTable.getValueAt(k, l).toString()); 
     								count++;
     							} 
@@ -474,7 +462,6 @@ public class ResultsPanel extends JPanel implements ActionListener {
      */
     private int[] autoGetPlacement(String calc) {
     	int[] coords = new int[2];
-    	NMSHLPlugin.readImageName();
     	
     	String newCalc = "";    	
     	if(calc.contains("Muscle Thickness")) {
@@ -483,18 +470,22 @@ public class ResultsPanel extends JPanel implements ActionListener {
     		newCalc = "Pen";
     	} else if(calc.contains("Total Area")) {
     		newCalc = "Area";
-    	} else if(calc.contains("Total Mean")) {
-    		newCalc = "EI";
-    	} else if(calc.contains("Medial Area")) {
-    		
+    	} else if(calc.contains("Elastography")) {
+			newCalc = "EL";
+		} else if(calc.contains("Echo Intensity")) {
+			newCalc = "EI";
+		} else if(calc.contains("Medial Area")) {
+			newCalc = "Area";
+			NMSHLPlugin.muscleNameArray[1] = "MG";
     	} else if(calc.contains("Medial E.I.")) {
-    		
-    	} else if(calc.contains("Lateral Area")) {
-    		
-    	} else if(calc.contains("Lateral E.I.")) {
-    		
-    	} else if(calc.contains("Echo Intensity")) {
     		newCalc = "EI";
+			NMSHLPlugin.muscleNameArray[1] = "MG";
+    	} else if(calc.contains("Lateral Area")) {
+			newCalc = "Area";
+			NMSHLPlugin.muscleNameArray[1] = "LG";
+    	} else if(calc.contains("Lateral E.I.")) {
+			newCalc = "EI";
+			NMSHLPlugin.muscleNameArray[1] = "LG";
     	}
     	
     	System.out.println("NEW CALC: " + newCalc);
@@ -518,78 +509,94 @@ public class ResultsPanel extends JPanel implements ActionListener {
     	for(int i = 1; i < dataTable.getColumnCount(); i++) { //fills an array list with all column names
     		columns.add(dataTable.getValueAt(0, i).toString());
     	}
-    	
-    	if(!NMSHLPlugin.muscleNameArray[1].equals("TA")) { //TA images are excluded here and filtered in the else statement below
-    		for(int i = 0; i < columns.size(); i++) {
-    			String currentCol = columns.get(i);
 
-    			if(!dataTable.getValueAt(rowIndex, findCol(currentCol)).toString().contains("TA") && rowIndex >= 0
-						&& (!((dataTable.getValueAt(rowIndex, findCol(currentCol)).toString()).isEmpty()))) {
-    				columns.remove(i);
-    				i--;
-    			} else if(currentCol.contains("AVG")) { //filters out all columns containing "AVG"
+		for(int i = 0; i < columns.size(); i++) { //loops through colums and removes columns containing "AVG"
+			String currentCol = columns.get(i);
+			if(currentCol.contains("AVG")) { //filters out all columns containing "AVG"
+				columns.remove(i);
+				i--;
+			} else if(rowIndex >= 0 && (!((dataTable.getValueAt(rowIndex, findCol(currentCol)).toString()).isEmpty()))) {
+				columns.remove(i);
+				i--;
+			}
+		}
+
+		if(muscleNameArray[1] != null && !muscleNameArray[1].isEmpty()){
+			for(int i = 0; i < columns.size(); i++) {
+				String currentCol = columns.get(i);
+				if(!currentCol.contains(muscleNameArray[1])){
 					columns.remove(i);
 					i--;
-				} else if(currentCol.contains("AVG")) { //filters out all columns containing "AVG"
-    				columns.remove(i);
-    				i--;
-    			} else if(muscleNameArray[1] != null && !currentCol.contains(muscleNameArray[1])){ //filters out all wrong muscle columns
-    				columns.remove(i);
-    				i--;
-    			} else if(muscleNameArray[3] != null && !columns.get(i).contains(muscleNameArray[3])){ //filters out all non "CS" columns
-    				columns.remove(i);
-    				i--;
-    			} else if(muscleNameArray[3] == null && columns.get(i).contains("CSA")){ //filters out all columns containing "CSA"
-    				columns.remove(i);
-    				i--;
-    			} else if(columns.get(i).contains("EL")){ //filters out all "EL" (elastography) columns
-    				columns.remove(i);
-    				i--;
-    			} else if(calc.equals("") || !columns.get(i).contains(calc)) {
-    				columns.remove(i);
-    				i--;
-    			}
-    		}
+				}
+			}
+		}
 
-    		System.out.println("Columns: " + columns);
-    	} else { //TA image filtering occurs here
-    		for(int i = 0; i < columns.size(); i++) {
-    			String currentCol = columns.get(i);
-    			boolean isNumber = true;
-    			try {
-    				Double.parseDouble((dataTable.getValueAt(rowIndex, findCol(currentCol)).toString()));
-    			} catch (Exception e) {
-    				isNumber = false;
-    			}
-    			
-    			//if(dataTable.getValueAt(rowIndex, findCol(currentCol)).toString().contains("TA") || dataTable.getValueAt(rowIndex, findCol(currentCol)).toString().contains("TA")) {
-    			//if(isNumber && Double.parseDouble((dataTable.getValueAt(rowIndex, findCol(currentCol)).toString())) != 0) { //excludes columns that already contain values
-				if(isNumber && (!((dataTable.getValueAt(rowIndex, findCol(currentCol)).toString()).isEmpty()))) { //excludes columns that already contain values
+		if(muscleNameArray[3] != null && !muscleNameArray[3].isEmpty()){
+			for(int i = 0; i < columns.size(); i++) {
+				String currentCol = columns.get(i);
+				if(!currentCol.contains(muscleNameArray[3])){
 					columns.remove(i);
-    				i--;
-    			} else if(currentCol.contains("AVG")) { //filters out all columns containing "AVG"
-    				columns.remove(i);
-    				i--;
-    			} else if(muscleNameArray[1] != null && !currentCol.contains(muscleNameArray[1])){ //filters out all wrong muscle columns
-    				columns.remove(i);
-    				i--;
-    			//} else if(muscleNameArray[3] != null && !columns.get(i).contains(muscleNameArray[3])){ //filters out all non "CSA" columns
-    			} else if(!columns.get(i).contains("CS") && muscleNameArray[3] != null){ //filters out all non "CSA" columns
-    				columns.remove(i);
-    				i--;
-    			} else if(muscleNameArray[3] == null && columns.get(i).contains("CSA")) {
-    				columns.remove(i);
-    				i--;
-    			} else if(columns.get(i).contains("EL")){ //filters out all "EL" (elastography) columns
-    				columns.remove(i);
-    				i--;
-    			} else if(calc.equals("") || !columns.get(i).contains(calc)) {
-    				columns.remove(i);
-    				i--;
-    			}
-    		}
-    		//TODO
-    	}
+					i--;
+				}
+			}
+		} else {
+			for(int i = 0; i < columns.size(); i++) {
+				String currentCol = columns.get(i);
+				if(currentCol.contains("CSA")){
+					columns.remove(i);
+					i--;
+				}
+			}
+		}
+
+		if(muscleNameArray[4] != null && !muscleNameArray[4].isEmpty()){
+			for(int i = 0; i < columns.size(); i++) {
+				System.out.println("4: " + columns.toString());
+				String currentCol = columns.get(i);
+				if(!currentCol.contains(muscleNameArray[4])){
+					columns.remove(i);
+					i--;
+				}
+			}
+		} else {
+			for(int i = 0; i < columns.size(); i++) {
+				String currentCol = columns.get(i);
+				if(currentCol.contains("90")){
+					columns.remove(i);
+					i--;
+				}
+			}
+		}
+
+		if(muscleNameArray[5] != null && !muscleNameArray[5].isEmpty()){
+			for(int i = 0; i < columns.size(); i++) {
+				String currentCol = columns.get(i);
+				if(!currentCol.contains(muscleNameArray[5]) && (!muscleNameArray[1].equals("TA") || calc.equals("EL"))){
+					columns.remove(i);
+					i--;
+				}
+			}
+		} else {
+			for(int i = 0; i < columns.size(); i++) {
+				String currentCol = columns.get(i);
+				if(currentCol.contains("LO") && (!muscleNameArray[1].equals("TA") || calc.equals("EL"))){
+					columns.remove(i);
+					i--;
+				}
+			}
+		}
+
+		if(calc != null && !calc.isEmpty()){
+			for(int i = 0; i < columns.size(); i++) {
+				String currentCol = columns.get(i);
+				if(!currentCol.contains(calc)){
+					columns.remove(i);
+					i--;
+				}
+			}
+		}
+
+		System.out.println(columns.toString());
     	
     	if(columns.size() > 0) {
     		pos = findCol(columns.get(0));
@@ -691,7 +698,22 @@ public class ResultsPanel extends JPanel implements ActionListener {
     		System.out.println("Coords : " + coords[0] + ", " + coords[1]);
     		
     		if(coords[0] != -1 && coords[1] != -1) { //checks if a proper location has been found
-    			placeBtn.setText("Place:  " + dataTable.getValueAt(0, coords[1]).toString());
+    			int taLoc = -1;
+    			for(int j = 0; j < dataTable.getColumnCount(); j++){
+    				if((dataTable.getValueAt(1, j).toString()).contains("TA")){
+    					taLoc = j;
+    					break;
+					}
+				}
+    			if(taLoc != -1 && coords[1] > taLoc){
+					placementLabel1.setText("<html><font color='white'>__</font><font color='red'>" + dataTable.getValueAt(coords[0], taLoc).toString()
+											+ "</font>  |  <font color='blue'>" + dataTable.getValueAt(0, coords[1]).toString() + "</font></html>");
+				} else {
+					placementLabel1.setText("<html><font color='white'>__</font><font color='red'>" + dataTable.getValueAt(coords[0], 0).toString()
+											+ "</font>  |  <font color='blue'>" + dataTable.getValueAt(0, coords[1]).toString() + "</font></html>");
+				}
+    			//placeBtn.setText("Place:  " + dataTable.getValueAt(0, coords[1]).toString());
+				//placementLabel1.setText("coord")
     			placeBtn.setEnabled(true);
     		}
     		
@@ -700,12 +722,12 @@ public class ResultsPanel extends JPanel implements ActionListener {
 			while (dataTable.getSelectionModel().isSelectionEmpty()) { //wait for user to select a cell on the data table
 				try {
 					Thread.sleep(300);
-					if(doSkip == true) {
+					if(doSkip) {
 						doSkip = false;
 						break;
 					} else if (!dataTable.getSelectionModel().isSelectionEmpty()) {
 						dataTable.setValueAt(valueArr[i], dataTable.getSelectedRow(), dataTable.getSelectedColumn());
-					} else if (doPlace == true) {
+					} else if (doPlace) {
 						doPlace = false;
 						dataTable.setValueAt(valueArr[i], coords[0], coords[1]); //places value automatically
 						break;
@@ -717,7 +739,8 @@ public class ResultsPanel extends JPanel implements ActionListener {
 			dataTable.repaint();
     		   		
     		
-    		placeBtn.setText("<html><center>Place:");
+    		//placeBtn.setText("<html><center>Place:");
+			placementLabel1.setText("<html><font color='white'>__</font><font color='red'>row</font>  |  <font color='blue'>column</font></html>");
     		placeBtn.setEnabled(false);
     		
     		

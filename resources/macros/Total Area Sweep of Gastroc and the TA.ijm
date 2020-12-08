@@ -23,12 +23,12 @@
     while(a){
         setTool("polygon");
 
-        waitForUser("Draw a polygon around the Medial and Lateral Gastroc or TA.");
+        waitForUser("Draw a polygon around the Medial and Lateral Gastroc.");
 
         z = 0;
         while(z == 0){
             if(selectionType() == -1){ //forces the user to make a selection
-                waitForUser("Draw a polygon around the Medial and Lateral Gastroc or TA.");
+                waitForUser("Draw a polygon around the Medial and Lateral Gastroc.");
             } else {
                 z = 1;
             }
