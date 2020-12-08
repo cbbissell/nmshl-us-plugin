@@ -215,6 +215,11 @@ public class ResultsPanel extends JPanel implements ActionListener {
 		String fileDirectory = openFile.getDirectory();
 		String fileName = openFile.getFileName();
 		if(fileDirectory == null) {
+			String ObjButtons[] = {"OK"};
+			int PromptResult = JOptionPane.showOptionDialog(null,
+					"No file selected.", "Failed",
+					JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null,
+					ObjButtons,ObjButtons[0]);
 			System.err.println("null file directory");
 			return;
 		}
@@ -243,6 +248,11 @@ public class ResultsPanel extends JPanel implements ActionListener {
         		tempCount++;
     		}
     	}
+		String ObjButtons[] = {"OK"};
+		int PromptResult = JOptionPane.showOptionDialog(null,
+				"File successfully imported.", "Success",
+				JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null,
+				ObjButtons,ObjButtons[0]);
     }
     
     /*
@@ -294,6 +304,11 @@ public class ResultsPanel extends JPanel implements ActionListener {
         if(doOverwrite) {
         	try {
         		file.createNewFile();
+				String ObjButtons[] = {"OK"};
+				int PromptResult = JOptionPane.showOptionDialog(null,
+						"File successfully exported.", "Success",
+						JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null,
+						ObjButtons,ObjButtons[0]);
         		System.out.println("File is created!");
 
 //        		System.out.println(file.exists());
