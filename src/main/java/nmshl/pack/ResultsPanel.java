@@ -6,9 +6,12 @@ package nmshl.pack;
 import java.awt.*;  
 import java.awt.event.*;
 import javax.swing.*;
+
+import ij.plugin.Macro_Runner;
 import nmshl.pack.*;
 import java.io.*;
 import java.nio.file.*;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 import ij.io.OpenDialog;
@@ -29,6 +32,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
     private JScrollPane scrollPane;
     private JTable dataTable;
     private JButton averageBtn;
+	private JButton maskBtn;
     private JButton renameBtn;
     volatile private double currentProgress = 0;
     
@@ -53,6 +57,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
 		skipBtn = new JButton ("<html><center>Skip");
 		placeBtn = new JButton ("<html><center>Place");
 		renameBtn = new JButton ("<html><center>Rename Images");
+		maskBtn = new JButton ("<html><center>Create Masks");
 		averageBtn = new JButton ("<html><center>Average Values");
 
 		addBtn(importBtn, "Import data table from an existing file", "import");
@@ -60,6 +65,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
 		addBtn(skipBtn, "Skip the current value being placed", "skip");
 		addBtn(placeBtn, "Place the current value in the stated column and row", "place");
 		addBtn(renameBtn, "Renames the images in a folder to match the names on images", "rename");
+		addBtn(maskBtn, "Mask the images in selected folder. Requires that each image be processed", "mask");
 		addBtn(averageBtn, "Average all columns with an \"AVG\" in their title", "average");
 
         placementLabel1 = new JLabel ("<html><font color='white'>__</font><font color='red'>row</font>  |  <font color='blue'>column</font></html>");
@@ -143,6 +149,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
 		topPane.add(exportBtn);
 		topPane.add(averageBtn);
 		topPane.add(renameBtn);
+		topPane.add(maskBtn);
 
 		midPane.setLayout(gridLayout1);
 		midPane.add(placeBtn);
@@ -168,7 +175,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
 		add(mainPane);
 		add(scrollPane);
 
-		setPreferredSize(new Dimension(668,86 + (rows * 18)));
+		setPreferredSize(new Dimension(668,86 + (rows * 19)));
     	
     	skipBtn.setEnabled(false);
     	placeBtn.setEnabled(false);
@@ -200,7 +207,9 @@ public class ResultsPanel extends JPanel implements ActionListener {
         } else if ("place".equals(e.getActionCommand())){
         	doPlace = true;
         } else if ("rename".equals(e.getActionCommand())) {
-        	renameFiles();
+			renameFiles();
+		} else if ("mask".equals(e.getActionCommand())) {
+        	maskFiles();
         } else if("average".equals(e.getActionCommand())) {
         	averageColumns();
         }
@@ -245,6 +254,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
     	for(int i = 0; i < rows; i++) {
     		for(int j = 0; j < cols; j++) {
         		dataTable.setValueAt(importedTable[tempCount], i, j);
+				System.out.println("changed:" + dataTable.getValueAt(i, j).toString());
         		tempCount++;
     		}
     	}
@@ -332,6 +342,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
      */
     public void averageColumns() {
     	for(int i = 0; i < dataTable.getColumnCount(); i++) { //loops through all columns searching for "AVG" columns
+			System.out.println("checking: " + dataTable.getValueAt(0, i).toString());
     		String temp1 = dataTable.getValueAt(0, i).toString(); //String containing the name of the current "AVG" column name
     		
     		if(temp1.contains("AVG")) {
@@ -348,15 +359,21 @@ public class ResultsPanel extends JPanel implements ActionListener {
     						double average = 0;
     						
     						for(int l = j; l < i; l++) { //loops through the data columns containing the values
-    							if((dataTable.getValueAt(k, l).toString() != null && !dataTable.getValueAt(k, l).toString().isEmpty()) &&
-										Double.parseDouble(dataTable.getValueAt(k, l).toString()) != 0) { //ignores cell positions that are equal to 0
-    								average += Double.parseDouble(dataTable.getValueAt(k, l).toString()); 
-    								count++;
+    							if((dataTable.getValueAt(k, l).toString() != null && !dataTable.getValueAt(k, l).toString().isEmpty())) { //ignores cell positions that are equal to 0
+    								try{
+    									if(Double.parseDouble(dataTable.getValueAt(k, l).toString()) != 0) {
+											average += Double.parseDouble(dataTable.getValueAt(k, l).toString());
+											count++;
+										}
+									} catch(NumberFormatException e) {
+										//Not a double in cell, skip this cell
+									}
     							} 
     						}
     						if(count > 0) { //only calculates average if some values have been added
+    							DecimalFormat df = new DecimalFormat("#.####");
     							average = average / count;
-    							dataTable.setValueAt((Object)(average), k, i);
+    							dataTable.setValueAt((Object)(df.format(average)), k, i);
     						}
     					}
     				}
@@ -364,7 +381,8 @@ public class ResultsPanel extends JPanel implements ActionListener {
     		}
     	}
     }
-    
+
+
     /*
      * Prompts user to select a folder of images. Iterates through all images, reading the names off of the images and changing the file name to match
      */
@@ -409,13 +427,9 @@ public class ResultsPanel extends JPanel implements ActionListener {
     	String newFileName;
 		for(int i = 0; i < files.length; i++) {
        		currentProgress = ((double)(i + 1.0) / (double)(files.length));
-        	
-        	boolean hasP = false; 
+
         	int index = (files[i].getName().lastIndexOf('.')); //Get the extension of the current image being processed
         	String extension = (files[i].getName()).substring(index);
-        	if((files[i].getName()).substring(index-1, index).equals("P") || (files[i].getName()).contains("(P)")) {
-        		hasP = true; //Checks if the current image has been previously processed
-        	}
         	
         	if(extension.equals(".jpg") || extension.equals(".jpeg") || extension.equals(".tif") || extension.equals(".tiff")) {
         	
@@ -429,17 +443,22 @@ public class ResultsPanel extends JPanel implements ActionListener {
         			imagePlus.changes = false;
         			imagePlus.close();
         		}
-    		    
+
         		File tempFile;
-        		if(hasP) { //Generates a new file name including the processed name, processed modifier, and file extension
-        			tempFile = new File(f.getSelectedFile() + File.separator + newFileName + "(P)" + extension);
-        			newFileName += "(P)";
-        		} else {
-               		tempFile = new File(f.getSelectedFile() + File.separator + newFileName + extension);
-        		}
-        		
+        		if((files[i].getName()).contains("P1")) {
+					if((files[i].getName()).contains("P2")) {
+						tempFile = new File(f.getSelectedFile() + File.separator + newFileName + "P3" + extension);
+					} else {
+						tempFile = new File(f.getSelectedFile() + File.separator + newFileName + "P2" + extension);
+					}
+				} else if ((files[i].getName()).contains("P")){
+					tempFile = new File(f.getSelectedFile() + File.separator + newFileName + "P1" + extension);
+				} else {
+					tempFile = new File(f.getSelectedFile() + File.separator + newFileName + extension);
+				}
+
         		if(!files[i].getName().equals(tempFile.getName())) { //checks if file name is already correct before renaming
-        			
+
         			/*
         			int j = 1;
         			while(tempFile.exists()) { //loops through values j to account for images with the same name on the image
@@ -447,7 +466,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
         				j++;
         			}
         			*/
-        			
+
         			tempFile = new File(f.getSelectedFile() + File.separator + newFileName + extension);
         			files[i].renameTo(tempFile);
         		}
@@ -471,7 +490,115 @@ public class ResultsPanel extends JPanel implements ActionListener {
     	renameBtn.setText("<html><center>Rename Images");
     	renameBtn.setEnabled(true);
     }
-    
+
+
+	/*
+	 * Prompts user to select a folder of images. Iterates through all images, creating a mask of the processed area
+	 */
+	public void maskFiles() {
+		maskBtn.setEnabled(false);
+		JFileChooser f = new JFileChooser();
+		f.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+		int result = f.showOpenDialog(this);
+		if (result == JFileChooser.CANCEL_OPTION || f.getSelectedFile() == null) {
+			maskBtn.setEnabled(true);
+			return;
+		}
+
+		System.out.println("Selected File: " + f.getSelectedFile());
+
+		File[] files = f.getSelectedFile().listFiles();
+
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				doMaskLoop(f, files);
+			}
+		}).start();
+
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				updateMaskBtn();
+			}
+		}).start();
+	}
+
+	private void doMaskLoop(JFileChooser f, File[] files) {
+//		boolean hasMaskFolder = false;
+//		for(int i = 0; i < files.length; i++) {
+//			if(files[i].getName().contains("Masks")){
+//				hasMaskFolder = true;
+//				System.out.println(files[i].getName());
+//				System.out.println("no mask folder");
+//			}
+//		}
+//		System.out.println("hasMaskFolder: " + hasMaskFolder);
+//		if(!hasMaskFolder){
+//			String path = files[1].getPath();
+//			File file = new File(files[1].getPath().substring(0,files[1].getPath().length() - files[1].getName().length()) + File.separator + "Masks");
+//						//NEED TRY CATCH HERE
+//			System.out.println(file.getPath());
+//			boolean madeFile = file.mkdir();
+//			if(madeFile){
+//				System.out.println("New dir made");
+//			} else {
+//				System.out.println("No dir made");
+//			}
+//		}
+
+		int count = 0;
+		String file1Name;
+		String file2Name;
+		for(int i = 0; i < files.length; i++) {
+			currentProgress = ((double)(i + 1.0) / (double)(files.length));
+
+			int index = (files[i].getName().lastIndexOf('.')); //Get the extension of the current image being processed
+			String extension = (files[i].getName()).substring(index);
+			if(!files[i].getName().contains("P") && !files[i].getName().contains("Masks")){
+				if(extension.equals(".jpg") || extension.equals(".jpeg") || extension.equals(".tif") || extension.equals(".tiff")) {
+					String processedImg = null;
+					File tempFile = null;
+					for(int j = 0; j < files.length; j++) {
+						if(files[j].getName().contains(files[i].getName().substring(0,index)) && files[j].getName().contains("P")){
+							processedImg = files[j].getName();
+							tempFile = files[j];
+						}
+					}
+					System.out.println("1: " + files[i].getName());
+					System.out.println("2: " + processedImg);
+					if(processedImg != null){
+						Macro_Runner macroRunner = new Macro_Runner();
+						String currentDirectory = System.getProperty("user.dir");
+						String result = macroRunner.runMacroFile(currentDirectory + File.separator+ "resources" + File.separator + "macros" + File.separator
+										+ "Mask Img.ijm", files[i] + "|" + tempFile);
+						count++;
+					}
+
+				}
+			}
+
+			NMSHLPlugin.measurementPanel.setAnswered(true);
+
+		}
+		JOptionPane.showMessageDialog(this, "Done. " + count + " files masked.");
+	}
+
+	private void updateMaskBtn() {
+		while(currentProgress < 1) {
+			try {
+				Thread.sleep(300);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			maskBtn.setText("" + (int)(currentProgress * 100) + "%");
+		}
+		maskBtn.setText("<html><center>Create Masks");
+		maskBtn.setEnabled(true);
+	}
+
     /*
      * Returns the row and column numbers for where a value should be placed based on the calculation done and image name
      */
@@ -524,17 +651,20 @@ public class ResultsPanel extends JPanel implements ActionListener {
     	for(int i = 1; i < dataTable.getColumnCount(); i++) { //fills an array list with all column names
     		columns.add(dataTable.getValueAt(0, i).toString());
     	}
+		System.out.println("Cols1: " + columns);
 
 		for(int i = 0; i < columns.size(); i++) { //loops through colums and removes columns containing "AVG"
 			String currentCol = columns.get(i);
 			if(currentCol.contains("AVG")) { //filters out all columns containing "AVG"
 				columns.remove(i);
 				i--;
-			} else if(rowIndex >= 0 && (!((dataTable.getValueAt(rowIndex, findCol(currentCol)).toString()).isEmpty()))) {
+			} else if(rowIndex >= 0 && (!((dataTable.getValueAt(rowIndex, findCol(currentCol)).toString()).equals(" "))
+					 				&& !((dataTable.getValueAt(rowIndex, findCol(currentCol)).toString()).isEmpty()))) {
 				columns.remove(i);
 				i--;
 			}
 		}
+		System.out.println("Cols2: " + columns);
 
 		if(muscleNameArray[1] != null && !muscleNameArray[1].isEmpty()){
 			for(int i = 0; i < columns.size(); i++) {
@@ -545,24 +675,37 @@ public class ResultsPanel extends JPanel implements ActionListener {
 				}
 			}
 		}
+		System.out.println("Cols3: " + columns);
+		System.out.println(muscleNameArray[3]);
 
 		if(muscleNameArray[3] != null && !muscleNameArray[3].isEmpty()){
 			for(int i = 0; i < columns.size(); i++) {
 				String currentCol = columns.get(i);
 				if(!currentCol.contains(muscleNameArray[3])){
-					columns.remove(i);
-					i--;
+					if(!(muscleNameArray[3].equals("CSA") && muscleNameArray[1] != null && muscleNameArray[1].equals("TA") && muscleNameArray[4] != null && muscleNameArray[4].equals("Area"))){
+						if(!currentCol.contains("Area")) {
+							System.out.println("test");
+							columns.remove(i);
+							i--;
+						}
+					} else {
+						System.out.println("test");
+						columns.remove(i);
+						i--;
+					}
+
 				}
 			}
 		} else {
 			for(int i = 0; i < columns.size(); i++) {
 				String currentCol = columns.get(i);
-				if(currentCol.contains("CSA")){
+				if(currentCol.contains("CSA") && !muscleNameArray[1].equals("Ga")){
 					columns.remove(i);
 					i--;
 				}
 			}
 		}
+		System.out.println("Cols4: " + columns);
 
 		if(muscleNameArray[4] != null && !muscleNameArray[4].isEmpty()){
 			for(int i = 0; i < columns.size(); i++) {
@@ -582,8 +725,10 @@ public class ResultsPanel extends JPanel implements ActionListener {
 				}
 			}
 		}
+		System.out.println("Cols5: " + columns);
+		System.out.println(muscleNameArray[5]);
 
-		if(muscleNameArray[5] != null && !muscleNameArray[5].isEmpty()){
+		if(muscleNameArray[5] != null && !muscleNameArray[5].isEmpty() && !muscleNameArray[1].equals("Ga")){
 			for(int i = 0; i < columns.size(); i++) {
 				String currentCol = columns.get(i);
 				if(!currentCol.contains(muscleNameArray[5]) && (!muscleNameArray[1].equals("TA") || calc.equals("EL"))){
@@ -600,7 +745,8 @@ public class ResultsPanel extends JPanel implements ActionListener {
 				}
 			}
 		}
-
+		System.out.println("Cols6: " + columns);
+		System.out.println("calc: " + calc);
 		if(calc != null && !calc.isEmpty()){
 			for(int i = 0; i < columns.size(); i++) {
 				String currentCol = columns.get(i);
@@ -610,6 +756,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
 				}
 			}
 		}
+		System.out.println("Cols7: " + columns);
 
 		System.out.println(columns.toString());
     	
@@ -631,7 +778,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
     		rows.add(dataTable.getValueAt(i, 0).toString());
     	}
     	
-    	if(!NMSHLPlugin.muscleNameArray[1].equals("TA")) {
+    	if(NMSHLPlugin.muscleNameArray[1] != null && !NMSHLPlugin.muscleNameArray[1].equals("TA")) {
     		for(int i = 0; i < rows.size(); i++) {
     			String currentRow = rows.get(i);
     			if(muscleNameArray[0] != null && !currentRow.contains(muscleNameArray[0])) { //filters out all rows of the wrong side
@@ -665,9 +812,11 @@ public class ResultsPanel extends JPanel implements ActionListener {
     		}
     		System.out.println("Rows: " + rows);
     	}
-    	
-    	if(rows.size() > 0) {
+
+    	if(rows.size() > 0 && rows.size() < 2) {
     		pos = findRow(rows.get(0));
+    	} else {
+    		pos = -1;
     	}
     	return(pos);
     }
@@ -713,6 +862,7 @@ public class ResultsPanel extends JPanel implements ActionListener {
     		System.out.println("Coords : " + coords[0] + ", " + coords[1]);
     		
     		if(coords[0] != -1 && coords[1] != -1) { //checks if a proper location has been found
+    			System.out.println("Valid Location Found!");
     			int taLoc = -1;
     			for(int j = 0; j < dataTable.getColumnCount(); j++){
     				if((dataTable.getValueAt(1, j).toString()).contains("TA")){

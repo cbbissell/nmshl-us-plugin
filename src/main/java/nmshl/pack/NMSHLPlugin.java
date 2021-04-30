@@ -65,7 +65,11 @@ public class NMSHLPlugin extends ImageJ implements PlugIn {
 		imagePath = IJ.getDirectory("image");
 		
 		
-		imageName = readImageName();
+		try {
+			imageName = readImageName();
+		} catch (Exception e){
+			System.out.println("Could not read image name");
+		}
 		choice = askMeasurement();
 		
         switch(choice) {
